@@ -14,10 +14,6 @@
   {1  +
    2  *
    99 :stop})
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
 
 (defn collect-updates
   [program]
