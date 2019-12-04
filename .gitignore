@@ -13,5 +13,5 @@ pom.xml.asc
 .nrepl-port
 .cpcache/
 *.iml
-/.idea/
+.idea
 .DS_Store
