@@ -57,9 +57,14 @@
   [path-points]
   (partition 2 1 path-points))
 
-(defn paths-intersection-points
+(defn manhattan-dist
+  [coordinates]
+  (->> (map #(Math/abs ^int %) coordinates)
+       (apply +)))
+
+(defn path-intersections
   [p1 p2]
-  ; I know in my heart that cgrand could solve this in 3-4 elegant lines
+  ; I know in my heart that @cgrand could solve this in 3-4 elegant lines
   (let [lines1 (path-points->lines p1)
         lines2 (path-points->lines p2)]
     (for [l1 lines1
@@ -77,18 +82,46 @@
                                 (.intersectionWith y1r y2r))
                               (catch IllegalArgumentException e nil))]
           :when (not-any? nil? [x-intersect y-intersect])]
-      (->> [x-intersect y-intersect]
-           (mapv #(.getMinimum %))))))
-
-(defn manhattan-dist
-  [coordinates]
-  (->> (map #(Math/abs ^int %) coordinates)
-      (apply +)))
+      {:l1         l1
+       :l2         l2
+       :intersect (->> [x-intersect y-intersect]
+                        (mapv #(.getMinimum %)))})))
 
 (defn part1
   [[p1 p2]]
-  (let [points (paths-intersection-points p1 p2)]
+  (let [points (map :intersect (path-intersections p1 p2))]
     (->> (map manhattan-dist points)
-        (filter pos-int?)
+         (filter pos-int?)
          (apply min))))
+
+;;
+;; PART 2
+;;
+
+(defn num-squares-to-intersection-point
+  [path line intersection-point]
+  (let [last-path-point (first line)
+        path-up-to-point (-> (vec (take-while #(not= last-path-point %) path))
+                             (conj last-path-point)
+                             (conj intersection-point))
+        point-pairs (partition 2 1 path-up-to-point)]
+    (->>
+      (map #(apply map - %) point-pairs)
+      (map manhattan-dist)
+      (apply +))))
+
+(comment
+
+  )
+
+(defn part2
+  [[p1 p2]]
+  (->>
+    (path-intersections p1 p2)
+    (map #(let [{:keys [l1 l2 intersect]} %]
+            (+ (num-squares-to-intersection-point p1 l1 intersect)
+               (num-squares-to-intersection-point p2 l2 intersect))))
+    (filter pos-int?)
+    (apply min)))
+
 
