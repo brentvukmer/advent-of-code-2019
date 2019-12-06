@@ -50,17 +50,18 @@
 (defn run-op
   [{:keys [opcode num-params param-modes]} program index]
   (let [op (get test-opcodes opcode)
-        params (take num-params (drop (+ index 1) program))]
+        params (take num-params (drop (+ index 1) program))
+        next-index (+ index (inc num-params))]
     (cond
       (contains? #{+ *} op)
       (let [[p1 p2 p3] params
             [m1 m2 _] param-modes
             result (op (param-val m1 program p1) (param-val m2 program p2))]
-        [(+ index (inc num-params))
+        [next-index
          (assoc program p3 result)])
 
       (= op read-and-save)
-      [(+ index (inc num-params))
+      [next-index
        (let [write-index (first params)]
          (read-and-save program write-index))]
 
@@ -68,7 +69,7 @@
       (let [mode (first param-modes)
             val (param-val mode program (first params))]
         (output val)
-        [index
+        [next-index
          program]))))
 
 (defn stop?
@@ -91,4 +92,4 @@
   [program]
   (do
     (println "Please enter TEST input")
-    ))
+    (run-test-program program)))
