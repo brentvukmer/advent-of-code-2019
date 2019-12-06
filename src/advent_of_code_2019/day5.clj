@@ -5,7 +5,7 @@
 
 (defn read-and-save
   [v write-index]
-  (->> read-line
+  (->> (read-line)
        Integer/parseInt
        (assoc v write-index)))
 
@@ -49,19 +49,27 @@
 
 (defn run-op
   [{:keys [opcode num-params param-modes]} program index]
-  (let [op (get test-opcodes opcode)]
-    (cond (contains? #{+ *} op)
-          (let [[p1 p2 p3] (take num-params (drop (+ index 1) program))
-                result (op (get program p1) (get program p2))]
-            [(+ index (inc num-params))
-             (assoc program p3 result)])
-          (= op read-and-save)
-          [(+ index (inc num-params))
-           (let [write-index (take num-params (drop (+ index 1) program))]
-             (op program write-index))]
-          (= op output)
-          [index
-           program])))
+  (let [op (get test-opcodes opcode)
+        params (take num-params (drop (+ index 1) program))]
+    (cond
+      (contains? #{+ *} op)
+      (let [[p1 p2 p3] params
+            [m1 m2 _] param-modes
+            result (op (param-val m1 program p1) (param-val m2 program p2))]
+        [(+ index (inc num-params))
+         (assoc program p3 result)])
+
+      (= op read-and-save)
+      [(+ index (inc num-params))
+       (let [write-index (first params)]
+         (read-and-save program write-index))]
+
+      (= op output)
+      (let [mode (first param-modes)
+            val (param-val mode program (first params))]
+        (output val)
+        [index
+         program]))))
 
 (defn stop?
   [opcode-info]
