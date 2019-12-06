@@ -5,6 +5,7 @@
 
 (defn read-and-save
   [v write-index]
+  (println "Please enter TEST input")
   (->> (read-line)
        Integer/parseInt
        (assoc v write-index)))
@@ -20,7 +21,7 @@
   [opcode]
   (if (contains? #{3 4} opcode)
     1
-    4))
+    3))
 
 (def param-modes {0 :position
                   1 :immediate})
@@ -81,6 +82,8 @@
   [program]
   (loop [index 0
          updated-program program]
+    ;(println (str "index =" index))
+    ;(println (str "updated-program =" updated-program))
     (let [opcode-input (last (take (+ index 1) updated-program))
           opcode-info (parse-opcode opcode-input)]
       (if (stop? opcode-info)
@@ -90,6 +93,4 @@
 
 (defn part1
   [program]
-  (do
-    (println "Please enter TEST input")
-    (run-test-program program)))
+  (run-test-program program))
