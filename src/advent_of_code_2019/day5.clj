@@ -37,6 +37,7 @@
         num-pads (- num-params (count param-mode-inputs))
         param-modes (->> param-mode-inputs
                          (concat (take num-pads (repeat 0)))
+                         reverse
                          (mapv #(get param-modes %)))]
     {:opcode      opcode
      :num-params  num-params
@@ -53,6 +54,13 @@
   (let [op (get test-opcodes opcode)
         params (take num-params (drop (+ index 1) program))
         next-index (+ index (inc num-params))]
+    ;(do
+    ;  (println (str "opcode = " opcode))
+    ;  (println (str "num-params = " num-params))
+    ;  (println (str "params = " (into [] params)))
+    ;  (println (str "param-modes = " param-modes))
+    ;  (println (str "program = " program))
+    ;  (println (str "index = " index)))
     (cond
       (contains? #{+ *} op)
       (let [[p1 p2 p3] params
@@ -91,6 +99,14 @@
         (let [[latest-index latest-program] (run-op opcode-info updated-program index)]
           (recur latest-index latest-program))))))
 
+(def test-program-1 [3,0,4,0,99])
+
+(def test-program-2 [1002,4,3,4,33])
+
+(def input (read-string (str "[" (slurp (clojure.java.io/resource "day5")) "]")))
+
 (defn part1
-  [program]
-  (run-test-program program))
+  ([program]
+   (run-test-program program))
+  ([]
+   (run-test-program input)))
