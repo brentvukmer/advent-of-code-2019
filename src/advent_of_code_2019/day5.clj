@@ -29,12 +29,8 @@
         [m1 m2] param-modes
         val1 (param-val m1 v p1)
         val2 (param-val m2 v p2)]
-    (println (str "jump-if: val1 = " val1))
-    (println (str "jump-if: val2 = " val2))
-    (println (str "jump-if: f = " f))
-    (println (str "jump-if: (f val1) = " (f val1)))
-    (if (f val1)
-      [instruction-index
+    (if (f  val1)
+      [val2
        (assoc v instruction-index val2)]
       [(+ instruction-index (inc (count params)))
        v])))
@@ -55,10 +51,6 @@
         val2 (param-val m2 v p2)
         store-val (if (f val1 val2) 1 0)
         updated-v (assoc v p3 store-val)]
-    ;(println (str "write-one-or-zero: val1 = " val1))
-    ;(println (str "write-one-or-zero: val2 = " val2))
-    ;(println (str "write-one-or-zero: p3 = " p3))
-    ;(println (str "write-one-or-zero: instruction-index = " instruction-index))
     (if (= p3 instruction-index)
       [instruction-index
        updated-v]
@@ -118,14 +110,9 @@
   (let [op (get opcode-lookup opcode)
         params (take num-params (drop (+ index 1) program))
         default-next-index (+ index (inc num-params))]
-    (println (str "run-op: opcode = " opcode))
-    (println (str "run-op: op = " op))
-    (println (str "run-op: num-params = " num-params))
-    (println (str "run-op: params = " (into [] params)))
-    (println (str "run-op: param-modes = " param-modes))
-    (println (str "run-op: program = " program))
-    (println (str "run-op: index = " index))
     (cond
+      (nil? op)
+      (throw (AssertionError. (str "Invalid opcode: " opcode)))
       (contains? #{+ *} op)
       (let [[p1 p2 p3] params
             [m1 m2 _] param-modes
@@ -160,8 +147,6 @@
   [program opcode-lookup]
   (loop [index 0
          updated-program program]
-    (println (str "run-test-program: index = " index))
-    (println (str "run-test-program: updated-program = " updated-program))
     (let [opcode-input (last (take (+ index 1) updated-program))
           opcode-info (parse-opcode opcode-input)]
       (if (stop? opcode-info)
