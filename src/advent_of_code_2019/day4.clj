@@ -8,7 +8,7 @@
 ;; PART 1
 ;;
 
-(defn- digits
+(defn digits
   [num]
   (->> (str num)
        (map str)
