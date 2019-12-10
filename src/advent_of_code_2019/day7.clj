@@ -44,7 +44,7 @@
   [a val]
   (swap! a assoc :output val))
 
-(def possible-amplifier-settings
+(def part1-amplifier-settings
   (let [r (range 0 5)]
     (-> (-> (for [x (range 0 1000)]
               (shuffle r))
@@ -122,7 +122,7 @@
 
 (defn test-phase-settings
   [program]
-  (->> (for [s possible-amplifier-settings]
+  (->> (for [s part1-amplifier-settings]
          (let [test-chain-result (-> (reduce
                                        (fn [output amplifier-setting]
                                          (let [atf (amplifier-test-fn amplifier-setting output program)] (atf)))
@@ -135,14 +135,29 @@
        last)
   )
 
-; For each combination of phase settings:
-; - Map each setting in the combo to an amplifier-test-fn
-; - Loop/recur over the list of amplifier-test-fn's
-;   - Set input to 0 initially
-;   - After that use the output from the last fn as the input for the next
-; Map the combo to the final output of the chain of amplifier test fns
-; Find the max output (and associated combo)
+(defn part1
+  []
+  (test-phase-settings day7-program))
 
 ;;
 ;; https://adventofcode.com/2019/day/7#part2
 ;;
+
+(def part2-amplifier-settings
+  (let [r (range 5 10)]
+    (-> (-> (for [x (range 0 1000)]
+              (shuffle r))
+            set
+            vec))))
+
+(def day7-part2-test-fixture1 {:max-thruster-signal    139629729
+                               :phase-setting-sequence [9, 8, 7, 6, 5]
+                               :program                [3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26,
+                                                        27, 4, 27, 1001, 28, -1, 28, 1005, 28, 6, 99, 0, 0, 5]})
+
+
+(def day7-part2-test-fixture2 {:max-thruster-signal    18216
+                               :phase-setting-sequence [9, 7, 8, 5, 6]
+                               :program                [3, 52, 1001, 52, -5, 52, 3, 53, 1, 52, 56, 54, 1007, 54, 5, 55, 1005, 55, 26, 1001, 54,
+                                                        -5, 54, 1105, 1, 12, 1, 53, 54, 53, 1008, 54, 0, 55, 1001, 55, 1, 55, 2, 53, 55, 53, 4,
+                                                        53, 1001, 56, -1, 56, 1005, 56, 6, 99, 0, 0, 0, 0, 10]})
