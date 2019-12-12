@@ -220,11 +220,9 @@
 
 (defn run-amplifier-program
   [state-store amplifier-id]
-  (let [current-state @state-store
-        p (get current-state :program)
-        i (get current-state :instruction-index)]
-    (loop [index i
-           updated-program p]
+  (let [current-state @state-store]
+    (loop [index (get current-state :instruction-index)
+           updated-program (get current-state :program)]
       (let [opcode-input (last (take (+ index 1) updated-program))
             opcode-info (day5/parse-opcode opcode-input)]
         (cond
@@ -245,21 +243,55 @@
 
 (defn run-amplifier-chain
   [state-store]
-  ; Run each amplifier's program
-  ; If stop is encountered before amplifier E, throw exception
-  ; Otherwise if output cons onto input for next amplifier
-  ; Save amplifier program state to the store
-  ; Return the result from the last amplifier program run
-  (throw (Exception. "Implement run-amplifier-chain"))
+  (loop  [remaining-amplifier-ids amplifier-ids]
+    (let [amplifier-id (first remaining-amplifier-ids)
+          program-result (run-amplifier-program state-store amplifier-id)]
+      (cond
+
+        (and
+          (not= :E (:amplifier-id program-result))
+          (= :stop (:last-op program-result)))
+        (throw (AssertionError. "Stop encountered before reaching amplifier E"))
+
+        (= :stop (:last-op program-result))
+        (do
+          (swap! state-store assoc amplifier-id (merge (get @state-store amplifier-id) (program-result)))
+          program-result)
+
+        :else
+        (do
+          (swap! state-store assoc amplifier-id (merge (get @state-store amplifier-id) (program-result)))
+          (recur (rest remaining-amplifier-ids))))))
   )
 
 (defn test-phase-setting-sequence
   [phase-settings program]
   (let [state-store (init-amplifiers phase-settings program)]
-    ; Run amplifier chain
-    ; If the chain is halted, return the output from E (read from the state-store)
-    ; Otherwise, cons E's output onto A's input, save to store, and re-run the amplifier chain
-    @state-store))
+    ; Run amplifier chain in a loop
+    (loop [chain-result (run-amplifier-chain state-store)]
+      (cond
+        (and
+          (= :E (:amplifier-id chain-result))
+          (= :stop (:last-op chain-result)))
+        ; If the chain is halted, return the output from E
+        (get-in @state-store [:E :output])
+
+        (and
+          (= :E (:amplifier-id chain-result))
+          (integer? (:output chain-result)))
+        (do
+          ; Cons E's output onto A's input, save to store, and re-run the amplifier chain
+          (swap! state-store assoc-in [:A :input] (cons (:output chain-result)
+                                                        (get-in @state-store [:A :input])))
+          (recur (run-amplifier-chain state-store)))
+
+        :else
+        (throw (AssertionError. (str "test-phase-setting-sequence: (should not reach here) state-store = " @state-store " chain-result = " chain-result)))))))
+
+(defn test-sequences
+  [program]
+  (for [s (part2-amplifier-settings)]
+    (test-phase-setting-sequence s program)))
 
 
 
