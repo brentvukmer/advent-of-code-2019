@@ -214,9 +214,44 @@
     (assoc-in configs [:A :inputs] (->> (get-in configs [:A :inputs])
                                         (cons 0)))))
 
+(defn feedback-read-and-save
+  [state-store amplifier-id program write-index]
+  (let [inputs (get-in @state-store [amplifier-id :inputs])]
+    ;(println (str "read-and-save: a = " @a " v = " v " write-index = " write-index))
+    (if ((complement empty?) inputs)
+      (let [input (peek inputs)
+            q (pop inputs)]
+        (swap! state-store assoc-in [amplifier-id :inputs] q)
+        ;(println (str "read-and-save: updated a = " @a))
+        (assoc program write-index input))
+      (day5/read-and-save program write-index))))
+
 (defn run-feedback-op
-  [opcode-info updated-program index state-store]
-  (throw (Exception. "Implement run-feedback-op")))
+  [{:keys [opcode num-params param-modes]} program index state-store amplifier-id]
+  (let [op (get test-opcodes opcode)
+        params (take num-params (drop (+ index 1) program))
+        default-next-index (+ index (inc num-params))]
+    (cond
+      (nil? op)
+      (throw (AssertionError. (str "Invalid opcode: " opcode)))
+      (contains? #{+ *} op)
+      (let [[p1 p2 p3] params
+            [m1 m2 _] param-modes
+            result (op (day5/param-val m1 program p1) (day5/param-val m2 program p2))]
+        [default-next-index
+         (assoc program p3 result)])
+
+      (= op read-and-save)
+      [default-next-index
+       (let [write-index (first params)]
+         ;(println (str "run-op: a = " @a " write-index = " write-index))
+         (feedback-read-and-save state-store amplifier-id program write-index))]
+
+      (contains? #{day5/jump-if-true
+                   day5/jump-if-false
+                   day5/less-than
+                   day5/equals} op)
+      (op program index params param-modes))))
 
 (defn run-amplifier-program
   [state-store amplifier-id]
@@ -238,7 +273,7 @@
             {:amplifier-id amplifier-id :program updated-program :instruction-index index :output val})
 
           :else
-          (let [[latest-index latest-program] (run-feedback-op opcode-info updated-program index state-store)]
+          (let [[latest-index latest-program] (run-feedback-op opcode-info updated-program index state-store amplifier-id)]
             (recur latest-index latest-program)))))))
 
 (defn run-amplifier-chain
@@ -251,9 +286,11 @@
         (and
           (not= :E (:amplifier-id program-result))
           (= :stop (:last-op program-result)))
-        (throw (AssertionError. "Stop encountered before reaching amplifier E"))
+        (throw (AssertionError. "run-amplifier-chain: Stop encountered before reaching amplifier E"))
 
-        (= :stop (:last-op program-result))
+        (or
+          (= :stop (:last-op program-result))
+          (integer? (:output program-result)))
         (do
           (swap! state-store assoc amplifier-id (merge (get @state-store amplifier-id) (program-result)))
           program-result)
@@ -266,7 +303,7 @@
 
 (defn test-phase-setting-sequence
   [phase-settings program]
-  (let [state-store (init-amplifiers phase-settings program)]
+  (let [state-store (atom (init-amplifiers phase-settings program))]
     ; Run amplifier chain in a loop
     (loop [chain-result (run-amplifier-chain state-store)]
       (cond
@@ -290,7 +327,7 @@
 
 (defn test-sequences
   [program]
-  (for [s (part2-amplifier-settings)]
+  (for [s part2-amplifier-settings]
     (test-phase-setting-sequence s program)))
 
 
