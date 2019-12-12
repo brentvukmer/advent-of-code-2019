@@ -217,12 +217,11 @@
 (defn feedback-read-and-save
   [state-store amplifier-id program write-index]
   (let [inputs (get-in @state-store [amplifier-id :inputs])]
-    ;(println (str "read-and-save: a = " @a " v = " v " write-index = " write-index))
     (if ((complement empty?) inputs)
-      (let [input (peek inputs)
-            q (pop inputs)]
+      (let [input (last inputs)
+            q (drop-last inputs)]
         (swap! state-store assoc-in [amplifier-id :inputs] q)
-        ;(println (str "read-and-save: updated a = " @a))
+        (println (str "feedback-read-and-save: updated state-store = " @state-store))
         (assoc program write-index input))
       (day5/read-and-save program write-index))))
 
@@ -232,8 +231,10 @@
         params (take num-params (drop (+ index 1) program))
         default-next-index (+ index (inc num-params))]
     (cond
+
       (nil? op)
       (throw (AssertionError. (str "Invalid opcode: " opcode)))
+
       (contains? #{+ *} op)
       (let [[p1 p2 p3] params
             [m1 m2 _] param-modes
@@ -256,24 +257,29 @@
 (defn run-amplifier-program
   [state-store amplifier-id]
   (let [current-state @state-store]
-    (loop [index (get current-state :instruction-index)
-           updated-program (get current-state :program)]
-      (let [opcode-input (last (take (+ index 1) updated-program))
+    (println (str "run-amplifier-program: amplifier-id = " amplifier-id))
+    (loop [index (get-in current-state [amplifier-id :instruction-index])
+           program (get-in current-state [amplifier-id :program])]
+      (let [opcode-input (last (take (+ index 1) program))
             opcode-info (day5/parse-opcode opcode-input)]
+        (println (str "run-amplifier-program: index = " index " opcode-info " opcode-info))
         (cond
 
           (day5/stop? opcode-info)
-          {:amplifier-id amplifier-id :program updated-program :instruction-index index :last-op :stop}
+          {:amplifier-id amplifier-id :program program :instruction-index index :last-op :stop}
 
           (output? opcode-info)
           (let [{:keys [_ num-params param-modes]} opcode-info
                 mode (first param-modes)
-                params (take num-params (drop (+ index 1) updated-program))
-                val (day5/param-val mode updated-program (first params))]
-            {:amplifier-id amplifier-id :program updated-program :instruction-index index :output val})
+                foo (println (str "run-amplifier-program: param mode = " mode))
+                params (take num-params (drop (+ index 1) program))
+                bar (println (str "run-amplifier-program: params = " params))
+                val (day5/param-val mode program (first params))]
+            (println (str "run-amplifier-program: output val = " val))
+            {:amplifier-id amplifier-id :program program :instruction-index index :output val})
 
           :else
-          (let [[latest-index latest-program] (run-feedback-op opcode-info updated-program index state-store amplifier-id)]
+          (let [[latest-index latest-program] (run-feedback-op opcode-info program index state-store amplifier-id)]
             (recur latest-index latest-program)))))))
 
 (defn run-amplifier-chain
@@ -292,6 +298,7 @@
           (= :stop (:last-op program-result))
           (integer? (:output program-result)))
         (do
+          (println (str "run-amplifier-chain: program-result = " program-result))
           (swap! state-store assoc amplifier-id (merge (get @state-store amplifier-id) (program-result)))
           program-result)
 
