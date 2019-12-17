@@ -147,7 +147,7 @@
   [program opcode-lookup]
   (loop [index 0
          updated-program program]
-    (let [opcode-input (last (take (+ index 1) updated-program))
+    (let [opcode-input (last (take (inc index) updated-program))
           opcode-info (parse-opcode opcode-input)]
       (if (stop? opcode-info)
         (do

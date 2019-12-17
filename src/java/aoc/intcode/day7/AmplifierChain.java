@@ -7,11 +7,11 @@ public class AmplifierChain {
 
     private List<IntCodeComputer> programChain;
 
-    private AmplifierChain(int[] phaseSettings, int[] program) {
+    private AmplifierChain(Long[] phaseSettings, long[] program) {
         programChain = new ArrayList<>();
-        programChain.add( new IntCodeComputer(program, new int[] {phaseSettings[0]}));
+        programChain.add( new IntCodeComputer(program, new long[] {phaseSettings[0]}));
         for (int i = 1; i < phaseSettings.length; i++) {
-            programChain.add(new IntCodeComputer(program, new int[] {phaseSettings[i]}));
+            programChain.add(new IntCodeComputer(program, new long[] {phaseSettings[i]}));
         }
     }
 
@@ -23,9 +23,11 @@ public class AmplifierChain {
         boolean halted =  false;
         int chainResult = -1;
         int input = 0;
+        int count = 0;
         while (!halted) {
             for (IntCodeComputer comp : programChain) {
-                halted = comp.run(input);
+                halted = comp.runProgram(input);
+                count++;
                 if (!halted) {
                     input = comp.getLastOutput();
                 } else {

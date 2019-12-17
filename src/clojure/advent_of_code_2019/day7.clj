@@ -1,5 +1,6 @@
 (ns advent-of-code-2019.day7
-  (:require [advent-of-code-2019.day5 :as day5]))
+  (:require [advent-of-code-2019.day5 :as day5])
+  (:import (aoc.intcode.day7 IntCodeComputer)))
 
 ;;
 ;; https://adventofcode.com/2019/day/7
@@ -358,6 +359,13 @@
   (for [s part2-amplifier-settings]
     (test-phase-setting-sequence s program)))
 
+
+(defn run-intcode-program
+  [program phase-setting]
+  (let [p (long-array (seq program))
+        i (long-array phase-setting)
+        computer (IntCodeComputer. p i)]
+    (.runProgram computer 0)))
 
 
 

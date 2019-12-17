@@ -6,5 +6,7 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.apache.commons/commons-lang3 "3.9"]
                  [com.github.dpaukov/combinatoricslib3 "3.3.0"]]
-  :source-paths ["src/advent_of_code_2019"]
-  :java-source-paths ["src/java"])
+  :plugins [[lein-virgil "0.1.8"]]
+  :source-paths ["src/clojure/"]
+  :java-source-paths ["src/java"]
+  )
